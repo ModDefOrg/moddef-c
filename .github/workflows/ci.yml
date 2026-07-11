@@ -1,0 +1,74 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    # Fork PRs don't run CI: PRs from outside the org must be pulled into a
+    # repo branch by a maintainer first (supply-chain guard).
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: moddef-c
+      # Conformance fixtures, the blessed registry, and the host-side
+      # tooling (moddef-py drives yaml→binary conversion + codegen).
+      - uses: actions/checkout@v4
+        with:
+          repository: ModDefOrg/moddef
+          path: moddef
+      - uses: actions/checkout@v4
+        with:
+          repository: ModDefOrg/devices
+          path: devices
+      - uses: actions/checkout@v4
+        with:
+          repository: ModDefOrg/moddef-py
+          path: moddef-py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Set up moddef-py venv (the Makefile's host tooling path)
+        run: |
+          python -m venv moddef-py/.venv
+          moddef-py/.venv/bin/pip install -e moddef-py
+      - name: Test (gcc)
+        working-directory: moddef-c
+        run: make test
+      - name: Examples
+        working-directory: moddef-c
+        run: make examples && ./build/superloop
+
+  thumb:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: moddef-c
+      - uses: actions/checkout@v4
+        with:
+          repository: ModDefOrg/devices
+          path: devices
+      - uses: actions/checkout@v4
+        with:
+          repository: ModDefOrg/moddef-py
+          path: moddef-py
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install arm-none-eabi-gcc
+        run: sudo apt-get update && sudo apt-get install -y gcc-arm-none-eabi
+      - name: Set up moddef-py venv
+        run: |
+          python -m venv moddef-py/.venv
+          moddef-py/.venv/bin/pip install -e moddef-py
+      - name: Cross-compile runtime + generated module for Cortex-M4
+        working-directory: moddef-c
+        run: make thumb

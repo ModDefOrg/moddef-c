@@ -1,0 +1,32 @@
+{
+  "docId": "test.sunspec",
+  "version": "1.0.0",
+  "devices": [{
+    "deviceId": "inv",
+    "blocks": [{
+      "blockId": "inverter",
+      "space": "HOLDING_REGISTER",
+      "startOffset": 40070,
+      "lengthWords": 50,
+      "discovery": {"kind": "SUNSPEC", "anchorCandidates": [0, 40000, 50000], "modelId": 103},
+      "points": [
+        {
+          "pointId": "w_sf",
+          "access": "READ_ONLY",
+          "storageType": "S16",
+          "valueType": {"primitive": "INT32"},
+          "mapping": {"space": "HOLDING_REGISTER", "modelRelativeOffset": 15, "lengthWords": 1}
+        },
+        {
+          "pointId": "ac_power",
+          "access": "READ_ONLY",
+          "storageType": "S16",
+          "valueType": {"primitive": "DECIMAL"},
+          "mapping": {"space": "HOLDING_REGISTER", "modelRelativeOffset": 14, "lengthWords": 1},
+          "transform": {"scaleRef": {"pointId": "w_sf", "mode": "POW10"}},
+          "naValues": [{"raw": "-32768", "meaning": "not_implemented"}]
+        }
+      ]
+    }]
+  }]
+}

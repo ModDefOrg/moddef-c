@@ -1,0 +1,68 @@
+{
+  "docId": "test.meter",
+  "version": "1.0.0",
+  "devices": [{
+    "deviceId": "meter",
+    "vendor": "Test",
+    "model": "M1",
+    "blocks": [
+      {
+        "blockId": "live",
+        "space": "INPUT_REGISTER",
+        "lengthWords": 16,
+        "points": [
+          {
+            "pointId": "voltage_l1",
+            "access": "READ_ONLY",
+            "storageType": "U16",
+            "valueType": {"primitive": "DECIMAL"},
+            "unit": "V",
+            "mapping": {"space": "INPUT_REGISTER", "offset": 0, "lengthWords": 1},
+            "transform": {"scale": {"numerator": "1", "denominator": "10"}},
+            "measurand": {"baseQuantity": "voltage", "phaseRef": "L1_N"}
+          },
+          {
+            "pointId": "voltage_l2",
+            "access": "READ_ONLY",
+            "storageType": "U16",
+            "valueType": {"primitive": "DECIMAL"},
+            "mapping": {"space": "INPUT_REGISTER", "offset": 1, "lengthWords": 1},
+            "transform": {"scale": {"numerator": "1", "denominator": "10"}},
+            "naValues": [{"raw": "65535", "meaning": "not_implemented"}]
+          }
+        ]
+      },
+      {
+        "blockId": "settings",
+        "space": "HOLDING_REGISTER",
+        "lengthWords": 8,
+        "points": [
+          {
+            "pointId": "stop_soc",
+            "access": "READ_WRITE",
+            "storageType": "U16",
+            "valueType": {"primitive": "DECIMAL"},
+            "mapping": {"space": "HOLDING_REGISTER", "offset": 0, "lengthWords": 1},
+            "write": {
+              "behavior": "DIRECT",
+              "constraints": {
+                "minValue": {"numerator": "0", "denominator": "1"},
+                "maxValue": {"numerator": "100", "denominator": "1"},
+                "step": {"numerator": "1", "denominator": "1"}
+              }
+            }
+          },
+          {
+            "pointId": "setpoint_scaled",
+            "access": "READ_WRITE",
+            "storageType": "U16",
+            "valueType": {"primitive": "DECIMAL"},
+            "mapping": {"space": "HOLDING_REGISTER", "offset": 2, "lengthWords": 1},
+            "transform": {"scale": {"numerator": "1", "denominator": "10"}},
+            "write": {"behavior": "DIRECT"}
+          }
+        ]
+      }
+    ]
+  }]
+}
