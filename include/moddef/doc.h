@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Zero-copy views over a binary `.moddef` document (spec §4, §27).
  *
  * The document is never copied or materialized: md_doc_t wraps the

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 #include "moddef/device.h"
 
 /* Discovery message fields (device.proto §7.3). */

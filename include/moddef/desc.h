@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Compact point descriptor (spec §7–§15): the codec's view of one point,
  * expanded from the wire by md_point_parse into ~130 stack bytes. Scalar
  * fields are decoded eagerly; repeated sections (na_values, selector

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Minimal integration sketch: a generated Growatt client polled from a
  * bare-metal superloop. The transport wraps whatever Modbus RTU/TCP stack
  * your firmware already has — here a stub that returns fixed data so the

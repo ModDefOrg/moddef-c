@@ -73,3 +73,16 @@ make thumb       # arm-none-eabi-gcc Cortex-M4 build of runtime + genmodule
 Tests need sibling checkouts of `moddef` (fixtures), `devices` (registry),
 and `moddef-py` with a `.venv` (host-side yaml→binary conversion and the
 generator).
+
+## License of generated output
+
+Code generated from a ModDef document (for example by `moddef gen`) is not a
+derivative work of the ModDef tooling or runtime. You may license the generated
+output under any terms you choose. The runtime it imports (this library) is
+Apache-2.0 licensed; see the LICENSE file for its terms, which apply only to the
+runtime, not to your generated code.
+
+## License
+
+Apache-2.0. See [LICENSE](LICENSE), [NOTICE](NOTICE), and
+[CONTRIBUTING.md](CONTRIBUTING.md).

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Codec vectors mirroring the shared Go/TS/Rust/Py suite: integer widths,
  * endianness, scaling, refs, strings, BCD, flags, fields, datetime,
  * sentinels, composed values, encode round-trips, write constraints. */

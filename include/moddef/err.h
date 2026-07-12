@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Error codes (spec §26.3/§26.4, §32). Every fallible call returns md_err_t;
  * MD_OK is 0 so `if (err)` reads naturally. */
 #ifndef MODDEF_ERR_H

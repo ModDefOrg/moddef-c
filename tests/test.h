@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Minimal test harness: OK(cond) counts, failures print file:line. */
 #ifndef MD_TEST_H
 #define MD_TEST_H

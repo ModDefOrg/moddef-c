@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """Convert a .moddef.yaml / .moddef.json document to binary .moddef using
 moddef-py (host-side tooling; the C runtime parses only the binary form)."""
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Device driver layer (spec §32.4): binds a transport to one device profile
  * inside a parsed document view for point reads/writes.
  *

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Length-delimited strings. Protobuf strings are not NUL-terminated, and
  * document views point straight into the serialized buffer, so every
  * identifier in the API is an (pointer, length) pair. */

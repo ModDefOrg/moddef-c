@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Tiny protobuf wire *writer* for tests: build Point messages in fixed
  * buffers so the codec vectors are self-contained (no host tooling).
  * Field numbers follow spec §27. */

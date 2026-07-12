@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Codec (spec §8–§15): pure functions over md_point_desc_t, kept in
  * behavioral lockstep with the Go/TS/Rust/Python implementations (shared
  * vector suite in tests/). Allocation-free; strings and bytes decode into

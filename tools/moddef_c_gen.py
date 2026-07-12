@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: Apache-2.0
 """Generate a C module from a ModDef document (spec §31).
 
 Because the C runtime parses binary documents directly, generation is

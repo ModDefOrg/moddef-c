@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* moddef-c — embedded C runtime for ModDef (spec v0.4).
  *
  * Parse binary `.moddef` documents in place (zero-copy views over flash or

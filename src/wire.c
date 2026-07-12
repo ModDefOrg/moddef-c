@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 #include "moddef/wire.h"
 
 bool md_wire_varint(md_wire_t *w, uint64_t *v)

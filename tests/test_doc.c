@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Document conformance: the golden binary fixtures from moddef/fixtures
  * must parse and navigate; the full growatt registry profile (converted
  * yaml→binary at build time) must expose all 396 points with sane

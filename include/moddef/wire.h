@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Minimal protobuf wire reader (spec §27). Read-only, allocation-free:
  * documents are navigated in place wherever they live (memory-mapped
  * flash, RAM). Only what the ModDef schema uses: varint (0),

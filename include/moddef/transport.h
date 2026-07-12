@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Transport abstraction (spec §32.3): blocking register-level access as a
  * table of function pointers — adapt to your HAL / Modbus stack / RTOS.
  *

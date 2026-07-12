@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Generated-module tests: the growatt registry profile and the sunspec
  * test document are generated at build time (embedded binary document +
  * point-index table + typed accessors) and driven over the mock

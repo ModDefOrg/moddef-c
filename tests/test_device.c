@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 /* Device layer tests (spec §32.4) over binary documents and a mock
  * transport: reads/scaling, sentinels, constrained writes, and SunSpec
  * discovery with ID-relative model offsets (§7.3) + base caching. */

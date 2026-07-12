@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: Apache-2.0
+
 #include "moddef/doc.h"
 
 #include "moddef/wire.h"
