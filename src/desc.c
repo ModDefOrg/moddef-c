@@ -24,6 +24,9 @@
 #define F_MAP_MODEL_REL 9
 #define F_MAP_COMPOSED 10
 #define F_MAP_STRING_ENC 12
+#define F_MAP_STORAGE_TYPE 13 /* §14 sub-mapping storage (signedness/width) */
+#define F_MAP_BIT_OFFSET 14   /* §14.2 bit window */
+#define F_MAP_BIT_LENGTH 15
 
 #define F_COMP_MANTISSA 1
 #define F_COMP_EXPONENT 2
@@ -106,19 +109,26 @@ static bool has_field(md_bytes_t msg, uint32_t field)
     return false;
 }
 
-/* Sub-mapping of a composed value: (offset, words or 1). */
-static void composed_sub(md_bytes_t comp, uint32_t field, uint16_t *off, uint8_t *words)
+/* Sub-mapping of a composed value: offset, words, storage, and the §14.2
+ * bit window (embedded decade exponent). */
+static void composed_sub(md_bytes_t comp, uint32_t field, md_composed_sub_t *out)
 {
-    *off = 0;
-    *words = 1;
+    memset(out, 0, sizeof *out);
+    out->words = 1;
     md_bytes_t sub;
     if (!md_wire_find_len(comp, field, &sub))
         return;
     uint64_t v;
     if (md_wire_find_varint(sub, F_MAP_OFFSET, &v))
-        *off = (uint16_t)v;
+        out->offset = (uint16_t)v;
     if (md_wire_find_varint(sub, F_MAP_LENGTH_WORDS, &v) && v > 0)
-        *words = (uint8_t)v;
+        out->words = (uint8_t)v;
+    if (md_wire_find_varint(sub, F_MAP_STORAGE_TYPE, &v))
+        out->storage = (uint8_t)v;
+    if (md_wire_find_varint(sub, F_MAP_BIT_OFFSET, &v))
+        out->bit_offset = (uint8_t)v;
+    if (md_wire_find_varint(sub, F_MAP_BIT_LENGTH, &v))
+        out->bit_length = (uint8_t)v;
 }
 
 md_err_t md_point_parse(const md_point_t *pt, md_point_desc_t *out)
@@ -164,8 +174,8 @@ md_err_t md_point_parse(const md_point_t *pt, md_point_desc_t *out)
             out->has_composed = true;
             if (md_wire_find_varint(comp, F_COMP_BASE, &v))
                 out->comp_base = md_wire_i64(v);
-            composed_sub(comp, F_COMP_MANTISSA, &out->comp_moff, &out->comp_mwords);
-            composed_sub(comp, F_COMP_EXPONENT, &out->comp_eoff, &out->comp_ewords);
+            composed_sub(comp, F_COMP_MANTISSA, &out->comp_m);
+            composed_sub(comp, F_COMP_EXPONENT, &out->comp_e);
         }
 
         md_bytes_t senc;

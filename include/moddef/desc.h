@@ -76,6 +76,17 @@ typedef struct md_rational {
     int64_t den; /* den == 0 → unset */
 } md_rational_t;
 
+/* §14 composed sub-mapping (word offset relative to the read window),
+ * optionally a §14.2 bit window — the embedded decade exponent, where
+ * mantissa and exponent share a word (Iskra T5/T6, Eaton PXM). */
+typedef struct md_composed_sub {
+    uint16_t offset;
+    uint8_t words;      /* 0 → 1 */
+    uint8_t storage;    /* md_storage_t; 0 = unspecified → signed window */
+    uint8_t bit_offset; /* bit window over the assembled sub-window, LSB = 0 */
+    uint8_t bit_length; /* 0 = no bit window */
+} md_composed_sub_t;
+
 typedef struct md_point_desc {
     md_str_t id;
     md_bytes_t point_raw;  /* the Point message; iterators re-walk it */
@@ -111,8 +122,7 @@ typedef struct md_point_desc {
 
     bool has_composed;        /* §14 */
     int64_t comp_base;
-    uint16_t comp_moff, comp_eoff;
-    uint8_t comp_mwords, comp_ewords;
+    md_composed_sub_t comp_m, comp_e;
 
     bool has_constraints;     /* §11.4 */
     md_rational_t w_min, w_max, w_step;

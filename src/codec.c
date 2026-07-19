@@ -180,17 +180,29 @@ static double apply_float_scale(const md_point_desc_t *d, double f)
     return f;
 }
 
-/* Signed integer from a sub-window (§14 composed mantissa/exponent). */
+/* Integer from a composed sub-mapping (§14). A bit window (bit_length > 0)
+ * selects [bit_offset, bit_offset+bit_length) of the assembled sub-window and
+ * sign-extends from bit_length — the §14.2 embedded decade exponent, where
+ * mantissa and exponent share a word (Iskra T5/T6, Eaton PXM). Signedness
+ * comes from the sub-mapping's storage type; absent one, the value is signed
+ * (the pre-v0.5 behavior). */
 static int64_t sub_int(const md_point_desc_t *d, const uint16_t *regs, uint16_t n,
-                       uint16_t off, uint8_t words)
+                       md_composed_sub_t s)
 {
-    if (words == 0)
-        words = 1;
-    if ((uint32_t)off + words > n)
+    uint8_t words = s.words == 0 ? 1 : s.words;
+    if ((uint32_t)s.offset + words > n)
         return 0;
-    uint64_t raw = assemble_u64(regs + off, words, d->byte_big, d->word_big);
-    uint8_t bits = (uint8_t)(words * 16 > 64 ? 64 : words * 16);
-    return sign_extend(raw & mask_for(bits), bits);
+    uint64_t raw = assemble_u64(regs + s.offset, words, d->byte_big, d->word_big);
+    uint8_t bits = s.storage == MD_ST_UNSPECIFIED
+                       ? (uint8_t)(words * 16 > 64 ? 64 : words * 16)
+                       : storage_bits(s.storage, words);
+    if (s.bit_length > 0) {
+        raw = (raw >> s.bit_offset) & mask_for(s.bit_length);
+        bits = s.bit_length;
+    }
+    if (s.storage == MD_ST_UNSPECIFIED || is_signed(s.storage))
+        return sign_extend(raw & mask_for(bits), bits);
+    return (int64_t)(raw & mask_for(bits));
 }
 
 static int64_t bcd_to_int(const uint16_t *regs, uint16_t n, bool byte_big, bool word_big)
@@ -218,8 +230,8 @@ md_err_t md_decode(const md_point_desc_t *d, const uint16_t *regs, uint16_t n_re
     if (d->vkind == MD_VK_COMPOSED) {
         if (d->comp_base == 0)
             return MD_ERR_COMPOSED_BASE;
-        int64_t mant = sub_int(d, regs, n_regs, d->comp_moff, d->comp_mwords);
-        int64_t exp = sub_int(d, regs, n_regs, d->comp_eoff, d->comp_ewords);
+        int64_t mant = sub_int(d, regs, n_regs, d->comp_m);
+        int64_t exp = sub_int(d, regs, n_regs, d->comp_e);
         double r = (double)mant;
         int64_t e = exp < 0 ? -exp : exp;
         if (e > 64)

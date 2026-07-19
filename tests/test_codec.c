@@ -12,6 +12,7 @@
 #define ST_U16 2
 #define ST_S16 3
 #define ST_U32 4
+#define ST_S32 5
 #define ST_U64 6
 #define ST_S48 18
 #define ST_F32 8
@@ -333,6 +334,100 @@ static void test_refs_composed_selector(void)
         uint16_t regs[] = {1500, 0xffff};
         OK(md_decode(&d, regs, 2, &MD_CTX_EMPTY, &v) == MD_OK);
         OK(APPROX(v.v.f64, 150.0));
+    }
+    { /* §14.2 embedded decade exponent (Iskra T6): FD 01 E2 40 -> 123.456 */
+        PB(mant, 24);
+        pb_v(&mant, 2, 0);       /* offset 0 (window-relative) */
+        pb_v(&mant, 3, 2);       /* length_words 2 */
+        pb_v(&mant, 13, ST_S32); /* signed mantissa */
+        pb_v(&mant, 15, 24);     /* bit_length 24 (bit_offset 0) */
+        PB(expo, 24);
+        pb_v(&expo, 2, 0);
+        pb_v(&expo, 3, 2);
+        pb_v(&expo, 13, ST_S16);
+        pb_v(&expo, 14, 24); /* bit_offset */
+        pb_v(&expo, 15, 8);  /* bit_length */
+        PB(comp, 96);
+        pb_msg(&comp, 1, &mant);
+        pb_msg(&comp, 2, &expo);
+        pb_i(&comp, 3, 10); /* base */
+        PB(m, 128);
+        pb_v(&m, 3, 2); /* length_words */
+        pb_msg(&m, 10, &comp);
+        PB(b, 256);
+        tp_head(&b, "pwr", 0, ST_COMPOSED);
+        tp_prim(&b, PR_DECIMAL);
+        pb_msg(&b, 20, &m);
+        md_point_desc_t d = parse(&b);
+        OK(d.vkind == MD_VK_COMPOSED);
+        OK(d.comp_m.bit_length == 24 && d.comp_e.bit_offset == 24 && d.comp_e.bit_length == 8);
+        md_value_t v;
+        uint16_t regs[] = {0xfd01, 0xe240};
+        OK(md_decode(&d, regs, 2, &MD_CTX_EMPTY, &v) == MD_OK);
+        OK(APPROX(v.v.f64, 123.456));
+        /* negative mantissa: -123456 = 0xFE1DC0 in 24-bit two's complement */
+        uint16_t regs2[] = {0xfdfe, 0x1dc0};
+        OK(md_decode(&d, regs2, 2, &MD_CTX_EMPTY, &v) == MD_OK);
+        OK(APPROX(v.v.f64, -123.456));
+    }
+    { /* §14.2 unsigned mantissa (Iskra T5): a set bit 23 must not sign-extend */
+        PB(mant, 24);
+        pb_v(&mant, 2, 0);
+        pb_v(&mant, 3, 2);
+        pb_v(&mant, 13, ST_U32); /* unsigned mantissa */
+        pb_v(&mant, 15, 24);
+        PB(expo, 24);
+        pb_v(&expo, 2, 0);
+        pb_v(&expo, 3, 2);
+        pb_v(&expo, 13, ST_S16);
+        pb_v(&expo, 14, 24);
+        pb_v(&expo, 15, 8);
+        PB(comp, 96);
+        pb_msg(&comp, 1, &mant);
+        pb_msg(&comp, 2, &expo);
+        pb_i(&comp, 3, 10);
+        PB(m, 128);
+        pb_v(&m, 3, 2);
+        pb_msg(&m, 10, &comp);
+        PB(b, 256);
+        tp_head(&b, "v", 0, ST_COMPOSED);
+        tp_prim(&b, PR_DECIMAL);
+        pb_msg(&b, 20, &m);
+        md_point_desc_t d = parse(&b);
+        md_value_t v;
+        uint16_t regs[] = {0x0080, 0x0000}; /* mantissa bit 23 set, exponent 0 */
+        OK(md_decode(&d, regs, 2, &MD_CTX_EMPTY, &v) == MD_OK);
+        OK(APPROX(v.v.f64, 8388608.0));
+    }
+    { /* §14.2 Eaton PXM GENERAL FORMAT: 8-bit exponent + 56-bit mantissa */
+        PB(mant, 24);
+        pb_v(&mant, 2, 0);
+        pb_v(&mant, 3, 4);
+        pb_v(&mant, 13, ST_U64);
+        pb_v(&mant, 15, 56);
+        PB(expo, 24);
+        pb_v(&expo, 2, 0);
+        pb_v(&expo, 3, 4);
+        pb_v(&expo, 13, ST_S16);
+        pb_v(&expo, 14, 56);
+        pb_v(&expo, 15, 8);
+        PB(comp, 96);
+        pb_msg(&comp, 1, &mant);
+        pb_msg(&comp, 2, &expo);
+        pb_i(&comp, 3, 10);
+        PB(m, 128);
+        pb_v(&m, 3, 4);
+        pb_msg(&m, 10, &comp);
+        PB(b, 256);
+        tp_head(&b, "e", 0, ST_COMPOSED);
+        tp_prim(&b, PR_DECIMAL);
+        pb_msg(&b, 20, &m);
+        md_point_desc_t d = parse(&b);
+        md_value_t v;
+        /* 123456789 * 10^-1 = 12345678.9 */
+        uint16_t regs[] = {0xff00, 0x0000, 0x075b, 0xcd15};
+        OK(md_decode(&d, regs, 4, &MD_CTX_EMPTY, &v) == MD_OK);
+        OK(APPROX(v.v.f64, 12345678.9));
     }
     { /* selector cases (§10.5) */
         PB(case0, 32);
