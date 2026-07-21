@@ -1,0 +1,130 @@
+{
+  "docId": "test.commands",
+  "version": "1.0.0",
+  "devices": [{
+    "deviceId": "cmd-device",
+    "vendor": "Test",
+    "model": "CMD-1",
+    "blocks": [
+      {
+        "blockId": "job",
+        "space": "HOLDING_REGISTER",
+        "lengthWords": 1000,
+        "points": [
+          {
+            "pointId": "control",
+            "access": "COMMAND",
+            "storageType": "U16",
+            "valueType": {"primitive": "UINT32"},
+            "mapping": {"space": "HOLDING_REGISTER", "offset": 10, "lengthWords": 1},
+            "write": {"behavior": "COMMAND_TRIGGER"}
+          },
+          {
+            "pointId": "status",
+            "access": "READ_ONLY",
+            "storageType": "U16",
+            "valueType": {"primitive": "UINT32"},
+            "mapping": {"space": "HOLDING_REGISTER", "offset": 11, "lengthWords": 1}
+          },
+          {
+            "pointId": "busy_flags",
+            "access": "READ_ONLY",
+            "storageType": "U16",
+            "valueType": {"primitive": "UINT32"},
+            "mapping": {"space": "HOLDING_REGISTER", "offset": 12, "lengthWords": 1}
+          },
+          {
+            "pointId": "result_length",
+            "access": "READ_ONLY",
+            "storageType": "U16",
+            "valueType": {"primitive": "UINT32"},
+            "mapping": {"space": "HOLDING_REGISTER", "offset": 20, "lengthWords": 1}
+          },
+          {
+            "pointId": "result_data",
+            "access": "READ_ONLY",
+            "storageType": "BYTES_RAW",
+            "valueType": {"primitive": "BYTES"},
+            "mapping": {
+              "space": "HOLDING_REGISTER", "offset": 21, "lengthWords": 8,
+              "byteOrder": "BIG_ENDIAN", "wordOrder": "WORD_BIG_ENDIAN",
+              "lengthRef": {"pointId": "result_length"}
+            }
+          },
+          {
+            "pointId": "blob",
+            "access": "READ_ONLY",
+            "storageType": "BYTES_RAW",
+            "valueType": {"primitive": "BYTES"},
+            "mapping": {"space": "HOLDING_REGISTER", "offset": 500, "lengthWords": 300}
+          }
+        ]
+      }
+    ],
+    "commands": [
+      {
+        "commandId": "run_job",
+        "params": [
+          {
+            "field": "payload",
+            "storageType": "BYTES_RAW",
+            "valueType": {"primitive": "BYTES"},
+            "mapping": {"space": "HOLDING_REGISTER", "offset": 0, "lengthWords": 4}
+          },
+          {
+            "field": "mode",
+            "storageType": "U16",
+            "valueType": {"primitive": "UINT32"},
+            "mapping": {"space": "HOLDING_REGISTER", "offset": 5, "lengthWords": 1},
+            "required": true
+          }
+        ],
+        "steps": [
+          {"name": "write_payload", "write": {"param": "payload"}},
+          {"name": "write_mode", "write": {"param": "mode"}},
+          {"name": "arm", "write": {"trigger": {"pointId": "control", "value": "1"}}},
+          {"name": "wait_not_busy",
+           "poll": {"pointId": "busy_flags",
+                    "until": {"op": "MASK", "mask": "1", "value": "0"},
+                    "intervalMs": 10, "timeoutMs": 1000}},
+          {"name": "wait_done",
+           "poll": {"pointId": "status",
+                    "until": {"op": "EQ", "value": "0"},
+                    "intervalMs": 10, "timeoutMs": 1000}},
+          {"name": "fetch_length", "read": {"pointId": "result_length", "into": "length"}},
+          {"name": "fetch_data", "read": {"pointId": "result_data", "into": "data"}}
+        ],
+        "results": [
+          {"field": "data", "from": "data", "valueType": {"primitive": "BYTES"}},
+          {"field": "length", "from": "length", "valueType": {"primitive": "UINT32"}}
+        ]
+      },
+      {
+        "commandId": "wait_forever",
+        "steps": [
+          {"name": "poll",
+           "poll": {"pointId": "status",
+                    "until": {"op": "EQ", "value": "9"},
+                    "intervalMs": 10, "timeoutMs": 50}}
+        ]
+      },
+      {
+        "commandId": "xfer",
+        "params": [
+          {
+            "field": "input",
+            "storageType": "BYTES_RAW",
+            "valueType": {"primitive": "BYTES"},
+            "mapping": {"space": "HOLDING_REGISTER", "offset": 600, "lengthWords": 200},
+            "required": true
+          }
+        ],
+        "steps": [
+          {"name": "w", "write": {"param": "input"}},
+          {"name": "r", "read": {"pointId": "blob", "into": "blob"}}
+        ],
+        "results": [{"field": "blob", "from": "blob"}]
+      }
+    ]
+  }]
+}

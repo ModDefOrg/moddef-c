@@ -710,6 +710,14 @@ const char *md_err_str(md_err_t err)
         return "MD_ERR_DISCOVERY";
     case MD_ERR_UNAVAILABLE:
         return "MD_ERR_UNAVAILABLE";
+    case MD_ERR_COMMAND_NOT_FOUND:
+        return "MD_ERR_COMMAND_NOT_FOUND";
+    case MD_ERR_PARAM_MISSING:
+        return "MD_ERR_PARAM_MISSING";
+    case MD_ERR_POLL_TIMEOUT:
+        return "MD_ERR_POLL_TIMEOUT";
+    case MD_ERR_STEP_REF:
+        return "MD_ERR_STEP_REF";
     }
     return "MD_ERR_?";
 }

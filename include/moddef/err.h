@@ -23,7 +23,11 @@ typedef enum md_err {
     MD_ERR_CONSTRAINT_STEP,  /* §11.4 not a multiple of step */
     MD_ERR_CONSTRAINT_ALLOWED, /* §11.4 not in allowed_values */
     MD_ERR_DISCOVERY,        /* SunS marker / model not found (§7.3) */
-    MD_ERR_UNAVAILABLE       /* §8.4 sentinel hit (typed accessors) */
+    MD_ERR_UNAVAILABLE,      /* §8.4 sentinel hit (typed accessors) */
+    MD_ERR_COMMAND_NOT_FOUND, /* §11.7 command id not in the profile */
+    MD_ERR_PARAM_MISSING,    /* §11.7 required command param not supplied */
+    MD_ERR_POLL_TIMEOUT,     /* §11.7 poll step exceeded timeout_ms */
+    MD_ERR_STEP_REF          /* §11.7 step/result reference does not resolve */
 } md_err_t;
 
 /* Static human-readable name, e.g. "MD_ERR_SHORT_READ". */

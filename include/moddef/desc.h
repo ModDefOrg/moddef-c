@@ -98,9 +98,12 @@ typedef struct md_point_desc {
 
     uint16_t offset;
     uint16_t model_relative_offset;
-    uint8_t length_words;
+    uint16_t length_words;
     bool byte_big;         /* §9.1: big-endian unless LITTLE_ENDIAN */
     bool word_big;         /* §9.2 */
+
+    bool has_length_ref;   /* §11.7.1: runtime read length from another point */
+    md_str_t lref_id;
 
     md_rational_t scale;      /* §10.2 */
     md_rational_t offset_add;

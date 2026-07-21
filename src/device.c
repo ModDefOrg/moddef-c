@@ -146,14 +146,89 @@ static md_err_t point_offset(md_dev_t *dev, const md_point_desc_t *d, uint16_t *
     return MD_OK;
 }
 
+md_err_t md_dev_point_offset(md_dev_t *dev, const md_point_desc_t *d, uint16_t *off)
+{
+    return point_offset(dev, d, off);
+}
+
+md_err_t md_dev_read_raw(md_dev_t *dev, uint8_t space, uint16_t off, uint16_t n,
+                         uint16_t *out)
+{
+    return read_space(dev, space, off, n, out);
+}
+
+md_err_t md_dev_write_raw(md_dev_t *dev, uint8_t space, uint16_t off, uint16_t n,
+                          const uint16_t *words)
+{
+    if (space == MD_SPACE_COIL)
+        return dev->t->write_coil(dev->t->ctx, off, n > 0 && words[0] != 0);
+    if (space != MD_SPACE_HOLDING)
+        return MD_ERR_UNSUPPORTED;
+    return dev->t->write_holding(dev->t->ctx, off, n, words);
+}
+
+/* §11.7.1 dynamic read length: decode the length_ref target to the
+ * effective word count, clamped to length_words as an upper bound. The
+ * target must not chain (MDE506 forbids it; guarded here for bad docs). */
+md_err_t md_dev_point_words(md_dev_t *dev, const md_point_desc_t *d, uint16_t *words)
+{
+    if (!d->has_length_ref) {
+        *words = md_point_words(d);
+        return MD_OK;
+    }
+    md_point_t rp;
+    md_err_t err = md_devprof_find_point(&dev->prof, d->lref_id, &rp);
+    if (err)
+        return err;
+    md_point_desc_t rd;
+    err = md_point_parse(&rp, &rd);
+    if (err)
+        return err;
+    if (rd.has_length_ref)
+        return MD_ERR_UNSUPPORTED; /* chained length_ref */
+    uint16_t regs[MD_MAX_POINT_WORDS];
+    uint16_t rw = md_point_words(&rd);
+    if (rw > MD_MAX_POINT_WORDS)
+        return MD_ERR_BUFFER;
+    uint16_t off;
+    err = point_offset(dev, &rd, &off);
+    if (err)
+        return err;
+    err = read_space(dev, rd.space, off, rw, regs);
+    if (err)
+        return err;
+    md_value_t val;
+    err = md_decode(&rd, regs, rw, &MD_CTX_EMPTY, &val);
+    if (err)
+        return err;
+    int64_t n;
+    if (val.kind == MD_VAL_I64)
+        n = val.v.i64;
+    else if (val.kind == MD_VAL_U64)
+        n = (int64_t)val.v.u64;
+    else if (val.kind == MD_VAL_F64)
+        n = (int64_t)val.v.f64;
+    else
+        return MD_ERR_WRONG_TYPE;
+    if (n < 0)
+        return MD_ERR_WRONG_TYPE;
+    if (d->length_words && n > (int64_t)d->length_words)
+        n = d->length_words;
+    *words = (uint16_t)n;
+    return MD_OK;
+}
+
 static md_err_t read_registers(md_dev_t *dev, const md_point_desc_t *d, uint16_t *regs,
                                uint16_t *n)
 {
-    uint16_t words = md_point_words(d);
+    uint16_t words;
+    md_err_t err = md_dev_point_words(dev, d, &words);
+    if (err)
+        return err;
     if (words > MD_MAX_POINT_WORDS)
         return MD_ERR_BUFFER;
     uint16_t off;
-    md_err_t err = point_offset(dev, d, &off);
+    err = point_offset(dev, d, &off);
     if (err)
         return err;
     err = read_space(dev, d->space, off, words, regs);
@@ -220,6 +295,16 @@ static md_err_t ref_context(md_dev_t *dev, const md_point_desc_t *d,
     return MD_OK;
 }
 
+/* A copy of d resized to the runtime word count of a length_ref read, so
+ * the codec's declared-width checks follow the actual window (§11.7.1). */
+static md_point_desc_t sized_desc(const md_point_desc_t *d, uint16_t n)
+{
+    md_point_desc_t s = *d;
+    s.length_words = n;
+    s.has_length_ref = false;
+    return s;
+}
+
 md_err_t md_dev_read_desc(md_dev_t *dev, const md_point_desc_t *d, md_value_t *out)
 {
     uint16_t regs[MD_MAX_POINT_WORDS];
@@ -233,6 +318,10 @@ md_err_t md_dev_read_desc(md_dev_t *dev, const md_point_desc_t *d, md_value_t *o
         err = ref_context(dev, d, entries, &ctx);
         if (err)
             return err;
+    }
+    if (d->has_length_ref && n != md_point_words(d)) {
+        md_point_desc_t s = sized_desc(d, n);
+        return md_decode(&s, regs, n, &ctx, out);
     }
     return md_decode(d, regs, n, &ctx, out);
 }
@@ -258,6 +347,10 @@ md_err_t md_dev_read_string_desc(md_dev_t *dev, const md_point_desc_t *d, char *
     md_err_t err = read_registers(dev, d, regs, &n);
     if (err)
         return err;
+    if (d->has_length_ref && n != md_point_words(d)) {
+        md_point_desc_t s = sized_desc(d, n);
+        return md_decode_string(&s, regs, n, buf, cap, out_len);
+    }
     return md_decode_string(d, regs, n, buf, cap, out_len);
 }
 

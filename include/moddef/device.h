@@ -60,6 +60,21 @@ static inline md_err_t md_dev_write_i64(md_dev_t *dev, md_str_t point_id, int64_
     return md_dev_write(dev, point_id, &v);
 }
 
+/* Effective register count for reading d: md_point_words, or — when the
+ * mapping sets length_ref (§11.7.1) — the decoded value of the referenced
+ * point, clamped to length_words as an upper bound. Performs a read. */
+md_err_t md_dev_point_words(md_dev_t *dev, const md_point_desc_t *d, uint16_t *words);
+
+/* Resolved register offset of d (SunSpec discovery included). Used by the
+ * command executor (§11.7) for chunked raw-window access. */
+md_err_t md_dev_point_offset(md_dev_t *dev, const md_point_desc_t *d, uint16_t *off);
+
+/* Raw register-space accessors at a resolved offset (no descriptor sizing). */
+md_err_t md_dev_read_raw(md_dev_t *dev, uint8_t space, uint16_t off, uint16_t n,
+                         uint16_t *out);
+md_err_t md_dev_write_raw(md_dev_t *dev, uint8_t space, uint16_t off, uint16_t n,
+                          const uint16_t *words);
+
 /* Pre-parsed descriptor variants: skip the by-id document walk when you
  * hold a descriptor already (generated code, hot loops). */
 md_err_t md_dev_read_desc(md_dev_t *dev, const md_point_desc_t *d, md_value_t *out);

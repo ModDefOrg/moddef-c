@@ -5,8 +5,8 @@ CFLAGS ?= -std=c99 -Wall -Wextra -Werror -pedantic -g -O1
 CPPFLAGS = -Iinclude -Itests
 LDLIBS = -lm
 
-SRC = src/wire.c src/doc.c src/desc.c src/codec.c src/device.c
-TESTS = test_codec test_doc test_device
+SRC = src/wire.c src/doc.c src/desc.c src/codec.c src/device.c src/command.c
+TESTS = test_codec test_doc test_device test_command
 PY = ../moddef-py/.venv/bin/python
 GEN = $(BUILD)/gen
 
@@ -27,6 +27,9 @@ $(BUILD)/meter.moddef: tests/data/meter.json tools/convert.py | $(BUILD)
 $(BUILD)/sunspec.moddef: tests/data/sunspec.json tools/convert.py | $(BUILD)
 	$(PY) tools/convert.py $< $@
 
+$(BUILD)/commands.moddef: tests/data/commands.json tools/convert.py | $(BUILD)
+	$(PY) tools/convert.py $< $@
+
 $(BUILD)/growatt-sph.moddef: ../devices/solar-inverter/growatt-sph/growatt-sph.moddef.yaml tools/convert.py | $(BUILD)
 	$(PY) tools/convert.py $< $@
 
@@ -40,10 +43,11 @@ $(GEN)/test_sunspec.h $(GEN)/test_sunspec.c: tests/data/sunspec.json tools/modde
 $(BUILD)/test_generated: tests/test_generated.c $(SRC) $(GEN)/growatt_sph.c $(GEN)/test_sunspec.c $(wildcard include/moddef/*.h) | $(BUILD)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -I$(GEN) -o $@ $< $(SRC) $(GEN)/growatt_sph.c $(GEN)/test_sunspec.c $(LDLIBS)
 
-test: $(addprefix $(BUILD)/,$(TESTS)) $(BUILD)/test_generated $(BUILD)/meter.moddef $(BUILD)/sunspec.moddef $(BUILD)/growatt-sph.moddef
+test: $(addprefix $(BUILD)/,$(TESTS)) $(BUILD)/test_generated $(BUILD)/meter.moddef $(BUILD)/sunspec.moddef $(BUILD)/commands.moddef $(BUILD)/growatt-sph.moddef
 	$(BUILD)/test_codec
 	$(BUILD)/test_doc
 	$(BUILD)/test_device
+	$(BUILD)/test_command
 	$(BUILD)/test_generated
 
 examples: $(BUILD)/superloop

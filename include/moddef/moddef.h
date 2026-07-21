@@ -9,6 +9,7 @@
 #define MODDEF_MODDEF_H
 
 #include "moddef/codec.h"
+#include "moddef/command.h"
 #include "moddef/desc.h"
 #include "moddef/device.h"
 #include "moddef/doc.h"

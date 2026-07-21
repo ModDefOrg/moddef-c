@@ -27,6 +27,9 @@
 #define F_MAP_STORAGE_TYPE 13 /* §14 sub-mapping storage (signedness/width) */
 #define F_MAP_BIT_OFFSET 14   /* §14.2 bit window */
 #define F_MAP_BIT_LENGTH 15
+#define F_MAP_LENGTH_REF 16   /* §11.7.1 dynamic read length (PointRef) */
+
+#define F_PREF_POINT_ID 1
 
 #define F_COMP_MANTISSA 1
 #define F_COMP_EXPONENT 2
@@ -160,7 +163,13 @@ md_err_t md_point_parse(const md_point_t *pt, md_point_desc_t *out)
         if (md_wire_find_varint(mapping, F_MAP_OFFSET, &v))
             out->offset = (uint16_t)v;
         if (md_wire_find_varint(mapping, F_MAP_LENGTH_WORDS, &v))
-            out->length_words = (uint8_t)v;
+            out->length_words = (uint16_t)v;
+        md_bytes_t lref;
+        if (md_wire_find_len(mapping, F_MAP_LENGTH_REF, &lref)) {
+            out->has_length_ref = true;
+            if (md_wire_find_len(lref, F_PREF_POINT_ID, &b))
+                out->lref_id = md_wire_str(b);
+        }
         if (md_wire_find_varint(mapping, F_MAP_MODEL_REL, &v))
             out->model_relative_offset = (uint16_t)v;
         if (md_wire_find_varint(mapping, F_MAP_BYTE_ORDER, &v) && v == BYTE_ORDER_LITTLE)
